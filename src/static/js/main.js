@@ -570,19 +570,19 @@ function speak(text) {
     const selectedVoice = voiceSelect.value;
 
     // 使用 config.js 中的配置
-    if (selectedVoice === CONFIG.CHINESE_VOICES.TINGTING.name) {
+    if (selectedVoice === 'chinese_voice_1') {
         // 设置为 Tingting 的语音
         // 需要查找系统中可用的中文女声语音
         speechSynthesis.getVoices().forEach(voice => {
-            if (voice.lang === 'zh-CN' && voice.name.includes(CONFIG.CHINESE_VOICES.TINGTING.name)) {
+            if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name) {
                 utterance.voice = voice;
             }
         });
-    } else if (selectedVoice === CONFIG.CHINESE_VOICES.YUNJIAN.name) {
+    } else if (selectedVoice === 'chinese_voice_2') {
         // 设置为 Yunjian 的语音
         // 需要查找系统中可用的中文男声语音
         speechSynthesis.getVoices().forEach(voice => {
-            if (voice.lang === 'zh-CN' && voice.name.includes(CONFIG.CHINESE_VOICES.YUNJIAN.name)) {
+            if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name) {
                 utterance.voice = voice;
             }
         });

@@ -120,6 +120,11 @@ function logMessage(message, type = 'system') {
 
     logsContainer.appendChild(logEntry);
     logsContainer.scrollTop = logsContainer.scrollHeight;
+
+    // 语音合成
+    if (type === 'ai' && responseTypeSelect.value === 'audio') {
+        speak(message);
+    }
 }
 
 /**
@@ -555,4 +560,32 @@ function stopScreenSharing() {
 
 screenButton.addEventListener('click', handleScreenShare);
 screenButton.disabled = true;
+
+// 语音合成函数
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN'; // 设置为中文
+
+    // 根据 voiceSelect.value 选择语音
+    const selectedVoice = voiceSelect.value;
+    if (selectedVoice === 'Tingting') {
+        // 设置为 Tingting 的语音
+        // 需要查找系统中可用的中文女声语音
+        speechSynthesis.getVoices().forEach(voice => {
+            if (voice.lang === 'zh-CN' && voice.name.includes('Tingting')) {
+                utterance.voice = voice;
+            }
+        });
+    } else if (selectedVoice === 'Yunjian') {
+        // 设置为 Yunjian 的语音
+        // 需要查找系统中可用的中文男声语音
+        speechSynthesis.getVoices().forEach(voice => {
+            if (voice.lang === 'zh-CN' && voice.name.includes('Yunjian')) {
+                utterance.voice = voice;
+            }
+        });
+    }
+
+    window.speechSynthesis.speak(utterance);
+}
   

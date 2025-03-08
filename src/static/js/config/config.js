@@ -14,7 +14,10 @@ export const CONFIG = {
         BUFFER_SIZE: 2048,
         CHANNELS: 1
     },
-	 generationConfig: {
+	audioResponse: {
+    language: "zh-CN",
+  },
+	generationConfig: {
         speechConfig: {
           voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
         },

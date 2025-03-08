@@ -16,13 +16,13 @@ export const CONFIG = {
     },
     // 添加中文语音配置
     CHINESE_VOICES: {
-        TINGTING: {
-            name: 'Tingting',
+        CHINESE_VOICE_1: {
+            name: 'Microsoft Huihui - Chinese (Simplified, PRC)',
             lang: 'zh-CN',
             // 可以添加更多自定义配置，例如音色、语速等
         },
-        YUNJIAN: {
-            name: 'Yunjian',
+        CHINESE_VOICE_2: {
+            name: 'Microsoft Huihui - Chinese (Simplified, PRC)',
             lang: 'zh-CN',
             // 可以添加更多自定义配置，例如音色、语速等
         },

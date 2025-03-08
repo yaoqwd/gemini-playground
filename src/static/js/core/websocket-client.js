@@ -26,6 +26,7 @@ export class MultimodalLiveClient extends EventEmitter {
         this.config = null;
         this.send = this.send.bind(this);
         this.toolManager = new ToolManager();
+        this.chatHistory = { turns: [] };
     }
 
     /**
@@ -67,10 +68,12 @@ export class MultimodalLiveClient extends EventEmitter {
         const ws = new WebSocket(`${this.baseUrl}?key=${apiKey}`);
 
         ws.addEventListener('message', async (evt) => {
+            console.log('WebSocket message received', evt);
             if (evt.data instanceof Blob) {
                 this.receive(evt.data);
             } else {
                 console.log('Non-blob message', evt);
+                handleServerMessage({ data: evt.data });
             }
         });
 
@@ -190,6 +193,9 @@ export class MultimodalLiveClient extends EventEmitter {
 
                 parts = otherParts;
                 const content = { modelTurn: { parts } };
+
+                this.chatHistory.turns.push({ role: 'bot', parts: parts });
+
                 this.emit('content', content);
                 this.log(`server.content`, response);
             }
@@ -254,10 +260,16 @@ export class MultimodalLiveClient extends EventEmitter {
             }
             return part;
         });
-        const content = { role: 'user', parts: formattedParts };
-        const clientContentRequest = { clientContent: { turns: [content], turnComplete } };
-        this._sendDirect(clientContentRequest);
-        this.log(`client.send`, clientContentRequest);
+        const content = {
+            clientContent: {
+                turns: [{ role: 'user', parts: formattedParts }],
+                turnComplete
+            }
+        };
+        this._sendDirect(content);
+        this.log(`client.send`, content);
+
+        this.chatHistory.turns.push({ role: 'user', parts: formattedParts });
     }
 
     /**

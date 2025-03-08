@@ -566,6 +566,11 @@ function speak(text) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN'; // 设置为中文
 
+    // 添加 onerror 事件处理函数
+    utterance.onerror = function(event) {
+        console.error('Speech synthesis error:', event);
+    };
+
     // 根据 voiceSelect.value 选择语音
     const selectedVoice = voiceSelect.value;
 
@@ -574,19 +579,26 @@ function speak(text) {
         // 设置为 Tingting 的语音
         // 需要查找系统中可用的中文女声语音
         speechSynthesis.getVoices().forEach(voice => {
+            console.log('Available voice:', voice.name, voice.lang); // 添加调试信息
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name) {
                 utterance.voice = voice;
+                console.log('Voice selected:', voice.name); // 添加调试信息
             }
         });
     } else if (selectedVoice === 'chinese_voice_2') {
         // 设置为 Yunjian 的语音
         // 需要查找系统中可用的中文男声语音
         speechSynthesis.getVoices().forEach(voice => {
+            console.log('Available voice:', voice.name, voice.lang); // 添加调试信息
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name) {
                 utterance.voice = voice;
+                console.log('Voice selected:', voice.name); // 添加调试信息
             }
         });
     }
+
+    // 清空语音合成队列
+    speechSynthesis.cancel();
 
     window.speechSynthesis.speak(utterance);
 }

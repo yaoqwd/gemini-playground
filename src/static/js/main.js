@@ -593,7 +593,6 @@ function speak(text) {
             }
         });
     }
-
     // 清空语音合成队列
     speechSynthesis.cancel();
 

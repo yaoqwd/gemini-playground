@@ -568,31 +568,28 @@ function speak(text) {
 
     // 添加 onerror 事件处理函数
     utterance.onerror = function(event) {
-        console.error('Speech synthesis error:', event);
+        logMessage('Speech synthesis error: ' + event.error); // 使用 logMessage 输出错误信息
     };
 
     // 根据 voiceSelect.value 选择语音
     const selectedVoice = voiceSelect.value;
 
-    // 使用 config.js 中的配置
     if (selectedVoice === 'chinese_voice_1') {
-        // 设置为 Tingting 的语音
-        // 需要查找系统中可用的中文女声语音
+        // 设置为 Chinese Voice 1 的语音
         speechSynthesis.getVoices().forEach(voice => {
-            console.log('Available voice:', voice.name, voice.lang); // 添加调试信息
+            logMessage('Available voice: ' + voice.name + ', lang: ' + voice.lang); // 使用 logMessage 输出语音信息
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name) {
                 utterance.voice = voice;
-                console.log('Voice selected:', voice.name); // 添加调试信息
+                logMessage('Voice selected: ' + voice.name); // 使用 logMessage 输出选中语音信息
             }
         });
     } else if (selectedVoice === 'chinese_voice_2') {
-        // 设置为 Yunjian 的语音
-        // 需要查找系统中可用的中文男声语音
+        // 设置为 Chinese Voice 2 的语音
         speechSynthesis.getVoices().forEach(voice => {
-            console.log('Available voice:', voice.name, voice.lang); // 添加调试信息
+            logMessage('Available voice: ' + voice.name + ', lang: ' + voice.lang); // 使用 logMessage 输出语音信息
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name) {
                 utterance.voice = voice;
-                console.log('Voice selected:', voice.name); // 添加调试信息
+                logMessage('Voice selected: ' + voice.name); // 使用 logMessage 输出选中语音信息
             }
         });
     }

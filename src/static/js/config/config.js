@@ -14,14 +14,19 @@ export const CONFIG = {
         BUFFER_SIZE: 2048,
         CHANNELS: 1
     },
-	audioResponse: {
-    language: "zh-CN",
-  },
-	generationConfig: {
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
+    // 添加中文语音配置
+    CHINESE_VOICES: {
+        TINGTING: {
+            name: 'Tingting',
+            lang: 'zh-CN',
+            // 可以添加更多自定义配置，例如音色、语速等
         },
-      },
+        YUNJIAN: {
+            name: 'Yunjian',
+            lang: 'zh-CN',
+            // 可以添加更多自定义配置，例如音色、语速等
+        },
+    },
     // If you are working in the RoArm branch 
     // ROARM: {
     //     IP_ADDRESS: '192.168.1.4'

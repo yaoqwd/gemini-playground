@@ -599,4 +599,19 @@ function speak(text) {
 
     window.speechSynthesis.speak(utterance);
 }
+
+function handleServerMessage(event) {
+    const message = event.data;
+    logMessage('server.send: ' + message);
+
+    if (message === 'turnComplete') {
+        logMessage('Turn complete, calling speak function'); // 添加调试信息
+        // set the speak text to the last bot message
+        const lastBotMessage = chatHistory.turns.filter(turn => turn.role === 'bot').map(turn => turn.parts.map(part => part.text).join('')).pop();
+        logMessage('Last bot message: ' + lastBotMessage); // 添加调试信息
+        speak(lastBotMessage);
+    } else if (message === 'setupComplete') {
+        logMessage('Setup complete');
+    }
+}
   

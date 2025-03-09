@@ -13,12 +13,22 @@ export function blobToJSON(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
+            console.log('FileReader result:', reader.result);
             if (reader.result) {
-                const json = JSON.parse(reader.result);
-                resolve(json);
+                try {
+                    const json = JSON.parse(reader.result);
+                    console.log('Parsed JSON:', json);
+                    resolve(json);
+                } catch (e) {
+                    console.error('Could not parse JSON', reader.result, e);
+                    reject(e);
+                }
             } else {
                 reject('Failed to parse blob to JSON');
             }
+        };
+        reader.onerror = () => {
+            reject('FileReader error');
         };
         reader.readAsText(blob);
     });

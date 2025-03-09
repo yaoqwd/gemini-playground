@@ -122,7 +122,10 @@ function logMessage(message, type = 'system') {
     logsContainer.scrollTop = logsContainer.scrollHeight;
 
     // 语音合成
-    if (type === 'ai' && responseTypeSelect.value === 'audio') {
+//    if (type === 'ai' && responseTypeSelect.value === 'audio') {
+//        speak(message);
+//    }
+    if (type === 'ai') {
         speak(message);
     }
 }
@@ -409,7 +412,7 @@ client.on('content', (content) => {
     }
     
     // 如果有文本内容且选择了音频响应模式，则播放语音
-    if (messageText && responseTypeSelect.value === 'audio') {
+    if (messageText) {
         speak(messageText);
     } else if (!messageText) {
         logMessage('无法获取文本内容进行语音合成', 'system');
@@ -589,92 +592,41 @@ screenButton.disabled = true;
 
 // 语音合成函数
 function speak(text) {
-    if (!text) {
-        logMessage('没有文本内容可以朗读', 'system');
-        return;
-    }
-    
-    logMessage('准备朗读文本: ' + text.substring(0, 50) + (text.length > 50 ? '...' : ''), 'system');
-    
+    logMessage('speak function called with text: ' + text); // 添加调试信息
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN'; // 设置为中文
-    
-    // 添加事件处理函数
+
+    // 添加 onerror 事件处理函数
     utterance.onerror = function(event) {
-        logMessage('语音合成错误: ' + event.error, 'system');
+        logMessage('Speech synthesis error: ' + event.error); // 使用 logMessage 输出错误信息
     };
-    
-    utterance.onstart = function() {
-        logMessage('语音播放开始', 'system');
-    };
-    
-    utterance.onend = function() {
-        logMessage('语音播放结束', 'system');
-    };
-    
-    // 获取所有可用的语音
-    const voices = window.speechSynthesis.getVoices();
-    logMessage('检测到 ' + voices.length + ' 个可用语音', 'system');
-    
-    // 如果语音列表为空，等待语音列表加载完成
-    if (voices.length === 0) {
-        logMessage('等待语音列表加载...', 'system');
-        window.speechSynthesis.onvoiceschanged = function() {
-            // 语音列表加载完成后重新调用speak函数
-            speak(text);
-        };
-        return;
-    }
-    
-    // 记录所有可用的中文语音
-    const chineseVoices = voices.filter(voice => voice.lang.includes('zh'));
-    logMessage('可用的中文语音数量: ' + chineseVoices.length, 'system');
-    chineseVoices.forEach(voice => {
-        logMessage('中文语音: ' + voice.name + ', 语言: ' + voice.lang, 'system');
-    });
-    
+
     // 根据 voiceSelect.value 选择语音
     const selectedVoice = voiceSelect.value;
-    let voiceFound = false;
-    
-    if (selectedVoice === 'chinese_voice_1' || selectedVoice === 'chinese_voice_2') {
-        // 首先尝试精确匹配配置的语音名称
-        const configVoiceName = selectedVoice === 'chinese_voice_1' ? 
-            CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name : 
-            CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name;
-        
-        // 尝试找到匹配的语音
-        for (const voice of voices) {
-            if (voice.lang.includes('zh') && voice.name === configVoiceName) {
+
+    if (selectedVoice === 'chinese_voice_1') {
+        // 设置为 Chinese Voice 1 的语音
+        speechSynthesis.getVoices().forEach(voice => {
+            logMessage('Available voice: ' + voice.name + ', lang: ' + voice.lang); // 使用 logMessage 输出语音信息
+            if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name) {
                 utterance.voice = voice;
-                logMessage('已选择语音: ' + voice.name, 'system');
-                voiceFound = true;
-                break;
+                logMessage('Voice selected: ' + voice.name); // 使用 logMessage 输出选中语音信息
             }
-        }
-        
-        // 如果没有找到精确匹配的语音，尝试使用任何中文语音
-        if (!voiceFound && chineseVoices.length > 0) {
-            utterance.voice = chineseVoices[0];
-            logMessage('未找到指定语音，使用替代中文语音: ' + chineseVoices[0].name, 'system');
-            voiceFound = true;
-        }
+        });
+    } else if (selectedVoice === 'chinese_voice_2') {
+        // 设置为 Chinese Voice 2 的语音
+        speechSynthesis.getVoices().forEach(voice => {
+            logMessage('Available voice: ' + voice.name + ', lang: ' + voice.lang); // 使用 logMessage 输出语音信息
+            if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name) {
+                utterance.voice = voice;
+                logMessage('Voice selected: ' + voice.name); // 使用 logMessage 输出选中语音信息
+            }
+        });
     }
-    
-    // 如果没有找到中文语音，使用默认语音
-    if (!voiceFound) {
-        logMessage('未找到中文语音，使用默认语音', 'system');
-    }
-    
+
     // 清空语音合成队列
     speechSynthesis.cancel();
-    
-    // 设置语音参数
-    utterance.rate = 1.0;  // 语速 (0.1 到 10)
-    utterance.pitch = 1.0; // 音调 (0 到 2)
-    utterance.volume = 1.0; // 音量 (0 到 1)
-    
-    // 播放语音
+
     window.speechSynthesis.speak(utterance);
 }
 

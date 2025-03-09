@@ -122,9 +122,6 @@ function logMessage(message, type = 'system') {
     logsContainer.scrollTop = logsContainer.scrollHeight;
 
     // 语音合成
-//    if (type === 'ai' && responseTypeSelect.value === 'audio') {
-//        speak(message);
-//    }
     if (type === 'ai') {
         speak(message);
     }
@@ -358,10 +355,6 @@ client.on('open', () => {
     logMessage('WebSocket connection opened', 'system');
 });
 
-client.on('log', (log) => {
-    logMessage(`${log.type}: ${JSON.stringify(log.message)}`, 'system');
-});
-
 client.on('close', (event) => {
     logMessage(`WebSocket connection closed (code ${event.code})`, 'system');
 });
@@ -377,45 +370,40 @@ client.on('audio', async (data) => {
 });
 
 client.on('content', (content) => {
-    logMessage('收到内容事件', 'system'); // 添加调试信息
-    
     // 尝试从content参数中获取文本
     let messageText = '';
-    
+
     if (content && typeof content === 'object') {
         // 如果content是对象，尝试提取text属性
         if (content.text) {
             messageText = content.text;
-            logMessage('从content对象中提取文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
+        } else if (content.modelTurn && Array.isArray(content.modelTurn.parts)) {
+            // 尝试从modelTurn.parts数组中提取文本
+            messageText = content.modelTurn.parts.map(part => part.text || '').join('');
         } else if (Array.isArray(content.parts)) {
             // 尝试从parts数组中提取文本
             messageText = content.parts.map(part => part.text || '').join('');
-            logMessage('从content.parts中提取文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
         }
     } else if (typeof content === 'string') {
         // 如果content直接是字符串
         messageText = content;
-        logMessage('content是字符串: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
     }
-    
+
     // 如果从content中无法获取文本，尝试从chatHistory中获取
     if (!messageText && client.chatHistory && client.chatHistory.turns) {
         const lastBotMessage = client.chatHistory.turns
             .filter(turn => turn.role === 'bot')
             .map(turn => turn.parts.map(part => part.text || '').join(''))
             .pop();
-            
+
         if (lastBotMessage) {
             messageText = lastBotMessage;
-            logMessage('从chatHistory中提取文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
         }
     }
-    
+
     // 如果有文本内容且选择了音频响应模式，则播放语音
     if (messageText) {
         speak(messageText);
-    } else if (!messageText) {
-        logMessage('无法获取文本内容进行语音合成', 'system');
     }
 });
 
@@ -592,53 +580,39 @@ screenButton.disabled = true;
 
 // 语音合成函数
 function speak(text) {
-    logMessage('speak function called with text: ' + text, 'system'); // 添加调试信息
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN'; // 设置为中文
 
     // 添加 onerror 事件处理函数
     utterance.onerror = function(event) {
-        logMessage('Speech synthesis error: ' + event.error + ', message: ' + event.message, 'system'); // 使用 logMessage 输出错误信息
+        console.error('Speech synthesis error: ' + event.error + ', message: ' + event.message);
     };
 
     // 根据 voiceSelect.value 选择语音
     const selectedVoice = voiceSelect.value;
-    logMessage('Selected voice: ' + selectedVoice, 'system');
 
     speechSynthesis.getVoices().forEach(voice => {
-        logMessage('Available voice: ' + voice.name + ', lang: ' + voice.lang, 'system'); // 使用 logMessage 输出语音信息
-    });
-
-    if (selectedVoice === 'chinese_voice_1') {
-        // 设置为 Chinese Voice 1 的语音
-        speechSynthesis.getVoices().forEach(voice => {
+        if (selectedVoice === 'chinese_voice_1') {
+            // 设置为 Chinese Voice 1 的语音
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_1.name) {
                 utterance.voice = voice;
-                logMessage('Voice selected: ' + voice.name, 'system'); // 使用 logMessage 输出选中语音信息
             }
-        });
-    } else if (selectedVoice === 'chinese_voice_2') {
-        // 设置为 Chinese Voice 2 的语音
-        speechSynthesis.getVoices().forEach(voice => {
+        } else if (selectedVoice === 'chinese_voice_2') {
+            // 设置为 Chinese Voice 2 的语音
             if (voice.lang === 'zh-CN' && voice.name === CONFIG.CHINESE_VOICES.CHINESE_VOICE_2.name) {
                 utterance.voice = voice;
-                logMessage('Voice selected: ' + voice.name, 'system'); // 使用 logMessage 输出选中语音信息
             }
-        });
-    } else {
-        logMessage('No voice selected, using default zh-CN voice', 'system');
-    }
+        }
+    });
 
-    // 清空语音合成队列
-    speechSynthesis.cancel();
-
-    window.speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
 }
 
+/**
+ * Handles server messages.
+ */
 function handleServerMessage(event) {
     const message = event.data;
-    logMessage('handleServerMessage被调用', 'system'); // 添加调试信息
-    logMessage('服务器消息: ' + message, 'system');
     
     // 尝试解析消息内容
     let messageText = '';
@@ -647,13 +621,11 @@ function handleServerMessage(event) {
         const parsedMessage = JSON.parse(message);
         if (parsedMessage && parsedMessage.text) {
             messageText = parsedMessage.text;
-            logMessage('从JSON消息中提取文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
         }
     } catch (e) {
         // 如果不是JSON格式，直接使用消息内容
         if (typeof message === 'string') {
             messageText = message;
-            logMessage('使用原始消息文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
         }
     }
     
@@ -666,15 +638,12 @@ function handleServerMessage(event) {
             
         if (lastBotMessage) {
             messageText = lastBotMessage;
-            logMessage('从chatHistory中提取文本: ' + messageText.substring(0, 50) + (messageText.length > 50 ? '...' : ''), 'system');
         }
     }
     
     // 如果有文本内容且选择了音频响应模式，则播放语音
     if (messageText && responseTypeSelect.value === 'audio') {
         speak(messageText);
-    } else if (!messageText) {
-        logMessage('无法获取文本内容进行语音合成', 'system');
     }
 }
   

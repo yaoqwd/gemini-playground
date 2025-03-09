@@ -69,10 +69,12 @@ export class MultimodalLiveClient extends EventEmitter {
 
         ws.addEventListener('message', async (evt) => {
             this.log('WebSocket message received', evt);
+            this.log('WebSocket message data', evt.data);
             if (evt.data instanceof Blob) {
                 this.receive(evt.data);
             } else {
-                console.log('Non-blob message', evt);
+                this.log('Non-blob message', evt.data);
+                this.log('Calling handleServerMessage', evt.data);
                 handleServerMessage({ data: evt.data });
             }
         });

@@ -150,61 +150,67 @@ export class MultimodalLiveClient extends EventEmitter {
      * @param {Blob} blob - The received blob data.
      */
     async receive(blob) {
-        const response = await blobToJSON(blob);
-        if (response.toolCall) {
-            this.log('server.toolCall', response);
-            await this.handleToolCall(response.toolCall);
-            return;
-        }
-        if (response.toolCallCancellation) {
-            this.log('receive.toolCallCancellation', response);
-            this.emit('toolcallcancellation', response.toolCallCancellation);
-            return;
-        }
-        if (response.setupComplete) {
-            this.log('server.send', 'setupComplete');
-            this.emit('setupcomplete');
-            return;
-        }
-        if (response.serverContent) {
-            const { serverContent } = response;
-            if (serverContent.interrupted) {
-                this.log('receive.serverContent', 'interrupted');
-                this.emit('interrupted');
+        try {
+            const json = await blobToJSON(blob);
+            this.log('server.content', json);
+
+            if (json.toolCall) {
+                this.log('server.toolCall', json);
+                await this.handleToolCall(json.toolCall);
                 return;
             }
-            if (serverContent.turnComplete) {
-                this.log('server.send', 'turnComplete');
-                this.emit('turncomplete');
+            if (json.toolCallCancellation) {
+                this.log('receive.toolCallCancellation', json);
+                this.emit('toolcallcancellation', json.toolCallCancellation);
+                return;
             }
-            if (serverContent.modelTurn) {
-                let parts = serverContent.modelTurn.parts;
-                const audioParts = parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith('audio/pcm'));
-                const base64s = audioParts.map((p) => p.inlineData?.data);
-                const otherParts = parts.filter((p) => !audioParts.includes(p));
-
-                base64s.forEach((b64) => {
-                    if (b64) {
-                        const data = base64ToArrayBuffer(b64);
-                        this.emit('audio', data);
-                        //this.log(`server.audio`, `buffer (${data.byteLength})`);
-                    }
-                });
-
-                if (!otherParts.length) {
+            if (json.setupComplete) {
+                this.log('server.send', 'setupComplete');
+                this.emit('setupcomplete');
+                return;
+            }
+            if (json.serverContent) {
+                const { serverContent } = json;
+                if (serverContent.interrupted) {
+                    this.log('receive.serverContent', 'interrupted');
+                    this.emit('interrupted');
                     return;
                 }
+                if (serverContent.turnComplete) {
+                    this.log('server.send', 'turnComplete');
+                    this.emit('turncomplete');
+                }
+                if (serverContent.modelTurn) {
+                    let parts = serverContent.modelTurn.parts;
+                    const audioParts = parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith('audio/pcm'));
+                    const base64s = audioParts.map((p) => p.inlineData?.data);
+                    const otherParts = parts.filter((p) => !audioParts.includes(p));
 
-                parts = otherParts;
-                const content = { modelTurn: { parts } };
+                    base64s.forEach((b64) => {
+                        if (b64) {
+                            const data = base64ToArrayBuffer(b64);
+                            this.emit('audio', data);
+                            //this.log(`server.audio`, `buffer (${data.byteLength})`);
+                        }
+                    });
 
-                this.chatHistory.turns.push({ role: 'bot', parts: parts });
+                    if (!otherParts.length) {
+                        return;
+                    }
 
-                this.emit('content', content);
-                this.log(`server.content`, response);
+                    parts = otherParts;
+                    const content = { modelTurn: { parts } };
+
+                    this.chatHistory.turns.push({ role: 'bot', parts: parts });
+
+                    this.emit('content', content);
+                    this.log(`server.content`, json);
+                }
+            } else {
+                console.log('Received unmatched message', json);
             }
-        } else {
-            console.log('Received unmatched message', response);
+        } catch (e) {
+            this.log('server.error', e);
         }
     }
 

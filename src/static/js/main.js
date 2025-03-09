@@ -593,6 +593,7 @@ function speak(text) {
             }
         });
     }
+
     // 清空语音合成队列
     speechSynthesis.cancel();
 
@@ -601,16 +602,11 @@ function speak(text) {
 
 function handleServerMessage(event) {
     const message = event.data;
+    logMessage('handleServerMessage called'); // 添加调试信息
     logMessage('server.send: ' + message);
-
-    if (message === 'turnComplete') {
-        logMessage('Turn complete, calling speak function'); // 添加调试信息
-        // set the speak text to the last bot message
-        const lastBotMessage = client.chatHistory.turns.filter(turn => turn.role === 'bot').map(turn => turn.parts.map(part => part.text).join('')).pop();
-        logMessage('Last bot message: ' + lastBotMessage); // 添加调试信息
-        speak(lastBotMessage);
-    } else if (message === 'setupComplete') {
-        logMessage('Setup complete');
-    }
+    // set the speak text to the last bot message
+    const lastBotMessage = client.chatHistory.turns.filter(turn => turn.role === 'bot').map(turn => turn.parts.map(part => part.text).join('')).pop();
+    logMessage('Last bot message: ' + lastBotMessage); // 添加调试信息
+    speak(lastBotMessage);
 }
   

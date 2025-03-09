@@ -68,15 +68,11 @@ export class MultimodalLiveClient extends EventEmitter {
         const ws = new WebSocket(`${this.baseUrl}?key=${apiKey}`);
 
         ws.addEventListener('message', async (evt) => {
-            this.log('WebSocket message received', evt);
             this.log('WebSocket message data', evt.data);
-            this.log('WebSocket message data type', typeof evt.data);
-            this.log('Is Blob?', evt.data instanceof Blob);
             if (evt.data instanceof Blob) {
                 this.receive(evt.data);
             } else {
                 this.log('Non-blob message', evt.data);
-                this.log('Calling handleServerMessage', evt.data);
                 handleServerMessage(evt.data);
             }
         });
@@ -154,6 +150,11 @@ export class MultimodalLiveClient extends EventEmitter {
             const json = await blobToJSON(blob);
             this.log('server.content', json);
 
+            this.log('json.toolCall', json.toolCall);
+            this.log('json.toolCallCancellation', json.toolCallCancellation);
+            this.log('json.setupComplete', json.setupComplete);
+            this.log('json.serverContent', json.serverContent);
+
             if (json.toolCall) {
                 this.log('server.toolCall', json);
                 await this.handleToolCall(json.toolCall);
@@ -171,6 +172,11 @@ export class MultimodalLiveClient extends EventEmitter {
             }
             if (json.serverContent) {
                 const { serverContent } = json;
+
+                this.log('serverContent.interrupted', serverContent.interrupted);
+                this.log('serverContent.turnComplete', serverContent.turnComplete);
+                this.log('serverContent.modelTurn', serverContent.modelTurn);
+
                 if (serverContent.interrupted) {
                     this.log('receive.serverContent', 'interrupted');
                     this.emit('interrupted');
@@ -182,6 +188,9 @@ export class MultimodalLiveClient extends EventEmitter {
                 }
                 if (serverContent.modelTurn) {
                     let parts = serverContent.modelTurn.parts;
+
+                    this.log('serverContent.modelTurn.parts', parts);
+
                     const audioParts = parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith('audio/pcm'));
                     const base64s = audioParts.map((p) => p.inlineData?.data);
                     const otherParts = parts.filter((p) => !audioParts.includes(p));
@@ -202,9 +211,10 @@ export class MultimodalLiveClient extends EventEmitter {
                     const content = { modelTurn: { parts } };
 
                     this.chatHistory.turns.push({ role: 'bot', parts: parts });
-
+                    this.log('Chat history turns', this.chatHistory.turns);
                     this.emit('content', content);
                     this.log(`server.content`, json);
+                    this.log('Emitted content event', content);
                 }
             } else {
                 console.log('Received unmatched message', json);
